@@ -1,2 +1,4 @@
-# ds5100_MonteCarloSim
-DS5100 Final Project Monte Carlo Simulator - Suraj Kunthu UVA MSDS
+# Monte Carlo Simulator
+DS5100 Final Project Fall 2022 \
+Suraj Kunthu \
+UVA School of Data Science
