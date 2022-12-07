@@ -167,5 +167,5 @@ class Analyzer:
         # Retrieve number of columns
         num_col = self.game_object.shape[1]
         # Apply lambda function to get number of distinct combinations of faces rolled
-        self.combos = self.game_object.apply(lambda combo: sorted(list(combo.iloc[0:num_col])), axis=1).value_counts().to_frame('Combo Frequency')
+        self.combos = self.game_object.apply(lambda combo: sorted(list(combo.iloc[0:num_col])), axis=1).value_counts().to_frame("Combo Frequency")
         return(self.combos)

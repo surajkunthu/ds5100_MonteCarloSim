@@ -88,13 +88,12 @@ class Test3_Analyzer(unittest.TestCase):
 
     def test_8_combo(self):
         winner = Game(object_list = [Test3_Analyzer.test5, Test3_Analyzer.test5, Test3_Analyzer.test5])
-        num_rolls = 5
+        num_rolls = 7
         winner.play(rolls = num_rolls)
         combo_score = Analyzer(winner)
-        testValue = combo_score.combo()
-        expectedValue = pd.DataFrame(data=[num_rolls], columns=["Frequency of Combination"],index=["[1,1,1]"])
-        error = "Your combinations table doesn't match the expected combinations table."
-        assert_frame_equal(testValue.reset_index(drop=True),expectedValue.reset_index(drop=True), error)
+        combo_test = combo_score.combo()
+        value_check = pd.DataFrame(data=[num_rolls], columns=["Combo Frequency"],index=["[1,1,1]"])
+        assert_frame_equal(combo_test.reset_index(drop=True),value_check.reset_index(drop=True), "Combo table and Test table do not match")
 
 if __name__ == '__main__':
     unittest.main(verbosity = 3)
