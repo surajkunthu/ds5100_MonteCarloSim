@@ -13,15 +13,16 @@ import random
 class Die:
     '''
     A die has N sides, or “faces”, and W weights, and can be rolled to select a face.
-    Takes an array of faces as an argument.
-    The array's data type (dtype) may be strings or numbers.
-    The faces must be unique; no duplicates.
-    Internally Initializes the weights to 1.0 for each face.
-    Saves faces and weights in a private dataframe that is to be shared by the other methods.
+     - Takes an array of faces as an argument.
+     - The array's data type (dtype) may be strings or numbers.
+     - The faces must be unique; no duplicates.
+     - Internally Initializes the weights to 1.0 for each face.
+     - Saves faces and weights in a private dataframe that is to be shared by the other methods.
     '''
     def __init__(self, faces):
         '''
         Create the Die
+        Faces can be a list of ints, floats, or strings
         '''
         self.faces = np.unique(np.array(faces))
         self.weight = np.ones(len(faces))
@@ -39,11 +40,12 @@ class Die:
         if not isinstance(new_weight, (float, int)):
             print("Invalid data type")
             return
-
+        # Create an identifer to search in dataframe
         find_weight = np.where(self.faces == face)
+        # replace value in with new value
         self.weight[find_weight] = float(new_weight)
+        # place new value in dataframe
         self.die_df["Weight"] = self.weight
-    
 
     def roll_die(self, rolls = 1):
         '''
@@ -54,43 +56,65 @@ class Die:
         return(result)
 
     def show_die(self):
+        '''
+        A method to show the user the die’s current set of faces and weights 
+        '''
         return(self.die_df)
 
 # Game Class ---------------------------------------------
 class Game:
     """
-    A game consists of rolling one or more dice of the same kind, one or more times. This class can play a game or show the results of the most recent play.
+    A game consists of rolling of one or more dice of the same kind one or more times.
+    The class has a behavior to play a game, i.e. to roll all of the dice a given number of times.
     """
     def __init__(self, object_list):
+        '''
+        Initialize Game by passing Die object to Game
+        '''
         self.die_objects = object_list
     
-    def play(self, times):
-        '''Plays the game by rolling your list of dice as many times as you specify. Stores and returns the results.'''
-        self.gameresults = pd.DataFrame()
-        dicenumber = 1
-        for m in self.die_objects:
-            mResults = m.roll_die(times=times)
-            name = f"Die Number {dicenumber}"
-            mSeries = pd.Series(mResults, name=name)
-            mDF = pd.DataFrame(mSeries)
-            if dicenumber == 1:
-                self.gameresults = mDF
+    def play(self, rolls):
+        '''
+        Play method takes a parameter to specify how many times the dice should be rolled.
+        Stores and returns the results.
+        '''
+        # Intialize a results DF
+        self.results = pd.DataFrame()
+        # start iter at 1
+        m_die = 1
+        # check EACH die roll in Die objects list
+        for n_roll in self.die_objects:
+            # Store Die roll method results
+            dice_results = n_roll.roll_die(rolls = rolls)
+            # Store values as a series type
+            dice_results_series = pd.Series(dice_results, name = f"Die Number {m_die}")
+            # Put series into a data frame
+            dice_results_df = pd.DataFrame(dice_results_series)
+            # Store results df as results
+            if m_die == 1:
+                self.results = dice_results_df
             else:
-                self.gameresults = self.gameresults.join(mDF)
-            dicenumber += 1
-        self.gameresults.index = self.gameresults.index + 1
-        self.gameresults.index.name = "Roll Number"
-        return(self.gameresults)
+                self.results = self.results.join(dice_results_df)
+            # Go to next die
+            m_die = m_die + 1
+        # increase the index by 1
+        self.results.index = self.results.index + 1
+        # roll number as a named index
+        self.results.index.name = "Roll Number"
+        return(self.results)
 
-    def show(self, format="wide"):
-        '''Shows the game results as a narrow or wide data frame - defaults to wide.'''
+    def show(self, form = "Wide"):
+        '''
+        Show method displays th user the results of the most recent play in narrow or wide (default) dataframe.
+        '''
         try:
-            if format == "wide":
-                return(self.gameresults)
-            elif format == "narrow":
-                return(self.gameresults.stack())
+            if (form == "Narrow" or form == "narrow"):
+                return(self.results.stack())
+            elif (form == "Wide" or form == "wide"):
+                return(self.results)
+        # Raise exception on invalid data format
         except ValueError as e:
-            print("The variable 'format' must be either 'wide' or 'narrow.'.")
+            print("Invalid Data Format. Must be 'narrow' or 'wide'.")
     
 # Analyzer Class ---------------------------------------------
 class Analyzer:
@@ -100,38 +124,48 @@ class Analyzer:
     These properties are available as attributes of an Analyzer object.
 
     Attributes (and associated methods) include:
-
-    A face counts per roll, i.e. the number of times a given face appeared in each roll. For example, if a roll of five dice has all sixes, then the counts for this roll would be 6 for the face value '6' and 0 for the other faces.
-    A jackpot count, i.e. how many times a roll resulted in all faces being the same, e.g. six ones for a six-sided die.
-    A combo count, i.e. how many combination types of faces were rolled and their counts.
-    A permutation count, i.e. how may sequence types were rolled and their counts.
+     - A face counts per roll, i.e. the number of times a given face appeared in each roll. For example, if a roll of five dice has all sixes, then the counts for this roll would be 6 for the face value '6' and 0 for the other faces.
+     - A jackpot count, i.e. how many times a roll resulted in all faces being the same, e.g. six ones for a six-sided die.
+     - A combo count, i.e. how many combination types of faces were rolled and their counts.
+     - A permutation count, i.e. how may sequence types were rolled and their counts.
     '''
     
-    def __init__(self, game):
-        self.game = pd.DataFrame(game.show())
+    def __init__(self, game_object):
+        '''
+        Initialize Analyzer Class, takes a game object as its input parameter.
+        '''
+        self.game_object = pd.DataFrame(game_object.show())
 
-    def face_count(self):
+    def count_face(self):
         '''
-        Returns and saves a frequence table for the roll results of your game, per roll.
+        Method to compute how many times a given face is rolled in each event.
         '''
-        self.facefreq = (self.game.apply(pd.Series.value_counts, axis=1).fillna(0))
-        return(self.facefreq)
+        # The dataframe with index as the roll number and face values as columns (i.e. it is in wide format).
+        self.roll_count = (self.game_object.apply(pd.Series.value_counts, axis=1).fillna(0))
+        return(self.roll_count)
 
     def jackpot(self):
         '''
-        Stores a data frame of all jackpots (where every die rolled the same face) and which roll number they were. Returns only the number of jackpots.
+        Method to compute how many times the game resulted in all faces being identical.
         '''
-        colnum = self.game.shape[1]
-        self.face_count()
-        hits = self.facefreq[self.facefreq.isin([colnum]).any(axis=1)]
-        jacknum = hits.shape[0]
-        self.jackpots = hits
-        return(jacknum)
+        # Retrieve number of columns
+        num_col = self.game_object.shape[1]
+        # Run the count_face method to find matches
+        self.count_face()
+        # Look for matches in dataframe along columns, sum up counts
+        num_identical = self.roll_count[self.roll_count.isin([num_col]).any(axis=1)]
+        # Find the numb
+        winners = num_identical.shape[0]
+        # store number of winners in jackpots
+        self.jackpot_winners = num_identical
+        return(winners)
 
     def combo(self):
         '''
-        Computes all combinations of faces taht were rolled in a game, saves and returns a frequency table for these combinations.
+        Method to compute the distinct combinations of faces rolled, along with their counts.
         '''
-        colnum = self.game.shape[1]
-        self.rollcombinations = self.game.apply(lambda x : sorted(list(x.iloc[0:colnum])), axis=1).value_counts().to_frame('Frequency of Combination')
-        return(self.rollcombination)
+        # Retrieve number of columns
+        num_col = self.game_object.shape[1]
+        # Apply lambda function to get number of distinct combinations of faces rolled
+        self.combos = self.game_object.apply(lambda combo: sorted(list(combo.iloc[0:num_col])), axis=1).value_counts().to_frame('Combo Frequency')
+        return(self.combos)
